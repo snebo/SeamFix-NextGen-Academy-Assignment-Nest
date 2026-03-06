@@ -8,6 +8,7 @@ import {
 import { Product } from './model/product.types';
 import { CreateProductDto } from './dto/create.product.dto';
 import { ProductResponseDto } from './dto/product.response.dto';
+import { UpdateProductDto } from './dto/update.product.dto';
 
 const products: Array<Product> = [
   {
@@ -95,7 +96,7 @@ export class ProductService {
     }
   }
 
-  updateProduct(id: number, updatedProduct: CreateProductDto): Product {
+  updateProduct(id: number, updatedProduct: UpdateProductDto): Product {
     const item = this.findOne(id); // this will throw the not found from abvove if not found
     // update item
     const updatedItem: Product = {

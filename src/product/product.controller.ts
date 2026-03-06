@@ -15,6 +15,8 @@ import { Response } from 'express';
 import { Product } from './model/product.types';
 import { CreateProductDto } from './dto/create.product.dto';
 import { ProductResponseDto } from './dto/product.response.dto';
+import { DeleteParamsDto } from './dto/delete.product.dto';
+import { UpdateProductDto } from './dto/update.product.dto';
 
 @Controller('product')
 export class ProductController {
@@ -40,15 +42,15 @@ export class ProductController {
   updateProduct(
     @Res() res: Response,
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: CreateProductDto,
+    @Body() body: UpdateProductDto,
   ) {
     const product = this.service.updateProduct(id, body);
     res.status(HttpStatus.OK).send(product);
   }
 
   @Delete(':id')
-  deleteProduct(@Res() res: Response, @Param('id', ParseIntPipe) id: number) {
-    const deletedProduct = this.service.removeProduct(id);
+  deleteProduct(@Res() res: Response, @Param() params: DeleteParamsDto) {
+    const deletedProduct = this.service.removeProduct(params.id);
     res.status(HttpStatus.OK).send(deletedProduct);
   }
 }
