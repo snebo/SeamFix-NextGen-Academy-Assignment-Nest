@@ -10,15 +10,15 @@ import { User } from './entities/entity';
 import { Repository } from 'typeorm';
 import { SignUpDto } from 'src/auth/dto/sign-up.dto';
 
-interface UserShape {
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone_number: string;
-  password: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+// interface UserShape {
+//   first_name: string;
+//   last_name: string;
+//   email: string;
+//   phone_number: string;
+//   password: string;
+//   createdAt: Date;
+//   updatedAt: Date;
+// }
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(User.name);
@@ -27,27 +27,44 @@ export class UserService {
     @InjectRepository(User)
     private userRepo: Repository<User>,
   ) {}
-  private readonly user: UserShape[] = [
-    {
-      first_name: 'John',
-      last_name: 'Doe',
-      password: 'adae23s',
-      email: 'example@mail.com',
-      phone_number: '12345678912',
-      createdAt: new Date(2016, 12),
-      updatedAt: new Date(),
-    },
-    {
-      first_name: 'Peter',
-      last_name: 'Random',
-      password: 'sd23sdf',
-      email: 'random@mail.com',
-      phone_number: '09876543210',
-      createdAt: new Date(2022, 5),
-      updatedAt: new Date(2026, 2),
-    },
-  ];
+  // private readonly user: UserShape[] = [
+  //   {
+  //     first_name: 'John',
+  //     last_name: 'Doe',
+  //     password: 'adae23s',
+  //     email: 'example@mail.com',
+  //     phone_number: '12345678912',
+  //     createdAt: new Date(2016, 12),
+  //     updatedAt: new Date(),
+  //   },
+  //   {
+  //     first_name: 'Peter',
+  //     last_name: 'Random',
+  //     password: 'sd23sdf',
+  //     email: 'random@mail.com',
+  //     phone_number: '09876543210',
+  //     createdAt: new Date(2022, 5),
+  //     updatedAt: new Date(2026, 2),
+  //   },
+  // ];
 
+  async findById(id: number): Promise<User> {
+    const user = await this.userRepo.findOneBy({ id });
+    if (!user) {
+      throw new BadRequestException('User Not Found');
+    }
+    return user;
+  }
+
+  async findAll(): Promise<User[]> {
+    return this.userRepo.find();
+  }
+
+  async deleteUser(id: number) {
+    //verify user exists
+    const user = await this.findById(id);
+    return await this.userRepo.delete(user);
+  }
   async create(createUser: SignUpDto): Promise<User> {
     try {
       const newUser = this.userRepo.create(createUser);
