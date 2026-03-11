@@ -36,6 +36,15 @@ export class ProductController {
     return this.service.findAll();
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('my_products')
+  async getMyProducts(@CurrentUser() user: any): Promise<Product[]> {
+    if (!user) {
+      throw new UnauthorizedException('please login');
+    }
+    return this.service.getMyProducts(+user.id);
+  }
+
   @Get(':id')
   async getProductById(
     @Param('id', ParseIntPipe) id: number,
@@ -43,15 +52,6 @@ export class ProductController {
     return this.service.findOne(id);
   }
 
-  @Get('my-products')
-  async getMyProducts(@CurrentUser() user): Promise<Product[]> {
-    if (!user) {
-      throw new UnauthorizedException('please login');
-    }
-    return this.service.getMyProducts(Number(user.id));
-  }
-
-  @UseGuards(JwtAuthGuard)
   @Post('')
   async createProduct(
     @Res() res: Response,
@@ -61,7 +61,7 @@ export class ProductController {
     if (!user) {
       throw new UnauthorizedException('please login');
     }
-    const product: Product = await this.service.createProduct(body, user.id);
+    const product = await this.service.createProduct(body, user.id);
     res.status(HttpStatus.CREATED).send(product);
   }
 

@@ -77,21 +77,28 @@ export class ProductService {
     // const item = products.find((product) => product.id === id);
     // if (!item) throw new NotFoundException('Product not found');
     // return item;
-    const product = await this.productRepo.findOneBy({ id });
+    const product = await this.productRepo.findOne({
+      where: { id },
+      relations: ['owner'],
+    });
     if (!product) throw new NotFoundException('Product not found');
     return product;
   }
 
-  async createProduct(payload: CreateProductDto, userId): Promise<Product> {
-    const user = await this.userService.findById(userId);
-
+  async createProduct(
+    payload: CreateProductDto,
+    userId,
+  ): Promise<Partial<Product>> {
     const newProduct = this.productRepo.create({
-      owner: user,
+      owner: { id: userId },
       ...payload,
     });
 
     try {
-      return await this.productRepo.save(newProduct);
+      // trying to hide the owner info
+      const { owner, ...created_product } =
+        await this.productRepo.save(newProduct);
+      return created_product;
     } catch (err) {
       this.logger.error({
         message: 'failed to create product',
@@ -152,7 +159,6 @@ export class ProductService {
   }
 
   async getMyProducts(userId: number): Promise<Product[]> {
-    const products = await this.findAll();
-    return products.filter((product) => product.owner.id === userId);
+    return this.productRepo.find({ where: { owner: { id: userId } } });
   }
 }
