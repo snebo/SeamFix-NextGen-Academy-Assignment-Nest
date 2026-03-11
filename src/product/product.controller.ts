@@ -1,9 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Body,
   Controller,
   Delete,
   Get,
   HttpStatus,
+  Logger,
   Param,
   ParseIntPipe,
   Patch,
@@ -14,35 +17,51 @@ import {
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { Response } from 'express';
-import { Product } from './model/product.types';
 import { CreateProductDto } from './dto/create.product.dto';
-import { ProductResponseDto } from './dto/product.response.dto';
 import { DeleteParamsDto } from './dto/delete.product.dto';
 import { UpdateProductDto } from './dto/update.product.dto';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { Product } from './product.entity';
 
 @UseGuards(JwtAuthGuard)
 @Controller('product')
 export class ProductController {
+  private readonly logger = new Logger(ProductController.name);
   constructor(private readonly service: ProductService) {}
 
-  @Get('')
-  getProducts(@CurrentUser() user: any) {
-    if (!user) {
-      throw new UnauthorizedException('please login');
-    }
+  @Get()
+  getProducts() {
+    this.logger.debug('get all products');
     return this.service.findAll();
   }
 
   @Get(':id')
-  getProductById(@Param('id', ParseIntPipe) id: number): Product {
+  async getProductById(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<Product> {
     return this.service.findOne(id);
   }
+
+  @Get('my-products')
+  async getMyProducts(@CurrentUser() user): Promise<Product[]> {
+    if (!user) {
+      throw new UnauthorizedException('please login');
+    }
+    return this.service.getMyProducts(Number(user.id));
+  }
+
   @UseGuards(JwtAuthGuard)
   @Post('')
-  createProduct(@Res() res: Response, @Body() body: CreateProductDto) {
-    const product: ProductResponseDto = this.service.createProduct(body);
+  async createProduct(
+    @Res() res: Response,
+    @Body() body: CreateProductDto,
+    @CurrentUser() user: any,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('please login');
+    }
+    const product: Product = await this.service.createProduct(body, user.id);
     res.status(HttpStatus.CREATED).send(product);
   }
 
@@ -51,14 +70,23 @@ export class ProductController {
     @Res() res: Response,
     @Param('id', ParseIntPipe) id: number,
     @Body() body: UpdateProductDto,
+    @CurrentUser() user: any,
   ) {
-    const product = this.service.updateProduct(id, body);
+    if (!user) {
+      throw new UnauthorizedException('please login');
+    }
+    const userId = user.id;
+    const product = this.service.updateProduct(id, body, Number(userId));
     res.status(HttpStatus.OK).send(product);
   }
 
   @Delete(':id')
-  deleteProduct(@Res() res: Response, @Param() params: DeleteParamsDto) {
-    const deletedProduct = this.service.removeProduct(params.id);
+  deleteProduct(
+    @Res() res: Response,
+    @Param() params: DeleteParamsDto,
+    @CurrentUser() user: any,
+  ) {
+    const deletedProduct = this.service.removeProduct(params.id, user.id);
     res.status(HttpStatus.OK).send(deletedProduct);
   }
 }

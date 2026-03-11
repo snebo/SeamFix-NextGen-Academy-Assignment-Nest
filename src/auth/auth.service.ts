@@ -1,9 +1,15 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UserService } from 'src/user/user.service';
 import { SignUpDto } from './dto/sign-up.dto';
+import { async } from 'rxjs';
 
 @Injectable()
 export class AuthService {
@@ -27,6 +33,7 @@ export class AuthService {
 
   async login(email: string, password: string) {
     const user = await this.userService.findByEmail(email);
+    this.logger.debug(`email: ${email}, password: ${password}`);
     const isMatch = await this.comparePassword(password, user.password);
     if (!isMatch) {
       throw new UnauthorizedException('Invalid Credentials');
@@ -36,8 +43,18 @@ export class AuthService {
   }
 
   async singUp(createUser: SignUpDto) {
+    // prevent duplication
+    const existingUser = await this.userService.isExistingUser(
+      createUser.email,
+    );
+    if (existingUser) {
+      throw new ConflictException('User already exists');
+    }
+    // has password
+    createUser.password = await this.hashPassword(createUser.password);
     const user = await this.userService.create(createUser);
     const payload = { sub: user.id, email: user.email };
+    this.logger.debug(`user: ${JSON.stringify(user)}`);
     return { access_token: this.jwtService.sign(payload) };
   }
 
@@ -56,6 +73,9 @@ export class AuthService {
     password: string,
     encrypted_password: string,
   ): Promise<boolean> {
+    this.logger.debug(
+      `password: ${password}, encrypted_password: ${encrypted_password}`,
+    );
     const is_match: boolean = await bcrypt.compare(
       password,
       encrypted_password,

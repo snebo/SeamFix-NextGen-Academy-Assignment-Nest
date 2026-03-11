@@ -84,4 +84,18 @@ export class UserService {
     }
     return user;
   }
+
+  // optionally, i can break this down to three functions or something like
+  // email = this.checkEmail(email); etc
+  // the goal is to query the db once, that run an clean algo that search for any of the putential duplicates
+  // like matching first and last name, phone number, email and whatever might come up in development
+  async isExistingUser(email: string): Promise<boolean> {
+    const user = await this.userRepo.findOneBy({ email });
+    if (user) {
+      this.logger.debug('user already exists');
+      return true;
+    } else {
+      return false;
+    }
+  }
 }

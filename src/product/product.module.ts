@@ -9,9 +9,10 @@ import { ProductController } from './product.controller';
 import { AuthMiddleware } from 'src/common/middleware/auth.middleware';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Product } from './product.entity';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Product])],
+  imports: [TypeOrmModule.forFeature([Product]), UserModule],
   providers: [ProductService],
   controllers: [ProductController],
 })
