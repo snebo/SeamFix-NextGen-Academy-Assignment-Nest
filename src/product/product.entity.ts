@@ -19,6 +19,18 @@ export class Product {
   @Column()
   price: number;
 
+  @Column({ nullable: true })
+  description?: string;
+
+  @Column({ nullable: true })
+  imageUrl?: string;
+
+  @Column({ nullable: true })
+  category?: string;
+
+  @Column({ nullable: true, type: 'float' })
+  rating?: number;
+
   @CreateDateColumn()
   created_at: Date;
 
