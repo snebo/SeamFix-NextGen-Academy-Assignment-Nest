@@ -17,11 +17,11 @@ async function bootstrap() {
   app.useGlobalFilters(new CatchEverythingFilter(httpAdapterHost));
   app.enableCors({
     origin: [
-      process.env.ALLOWED_ORIGINS?.split(',') ?? 'http://localhost:3001',
+      process.env.ALLOWED_ORIGINS?.split(',') ?? 'http://localhost:4200',
     ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-user-email'],
+    //credentials: true,
   });
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port, '0.0.0.0');
