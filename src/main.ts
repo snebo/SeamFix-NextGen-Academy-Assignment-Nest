@@ -9,6 +9,14 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   const httpAdapterHost = app.get(HttpAdapterHost);
   app.useGlobalFilters(new CatchEverythingFilter(httpAdapterHost));
+  app.enableCors({
+    origin: [
+      process.env.ALLOWED_ORIGINS?.split(',') ?? 'http://localhost:3001',
+    ],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  });
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port, '0.0.0.0');
 
