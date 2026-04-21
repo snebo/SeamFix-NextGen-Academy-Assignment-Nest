@@ -60,26 +60,14 @@ export class ProductService {
     private readonly userService: UserService,
   ) {}
   async findAll(): Promise<Product[]> {
-    // return products; // why stop here when i can remove the unwanted fields
-    // const responseList: Array<ProductResponseDto> = [];
-    // for (const product of products) {
-    //   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    //   const { updatedAt, createdAt, ...response } = product;
-    //   responseList.push(response);
-    // }
-    // return responseList;
-
-    const products = await this.productRepo.find();
+    const products = await this.productRepo.find({ relations: ['category'] });
     return products;
   }
 
   async findOne(id: number): Promise<Product> {
-    // const item = products.find((product) => product.id === id);
-    // if (!item) throw new NotFoundException('Product not found');
-    // return item;
     const product = await this.productRepo.findOne({
       where: { id },
-      relations: ['owner'],
+      relations: ['owner', 'category'],
     });
     if (!product) throw new NotFoundException('Product not found');
     return product;
@@ -87,17 +75,20 @@ export class ProductService {
 
   async createProduct(
     payload: CreateProductDto,
-    userId,
+    userId: number,
   ): Promise<Partial<Product>> {
+    const { categoryId, ...productData } = payload;
     const newProduct = this.productRepo.create({
-      owner: { id: userId },
-      ...payload,
+      owner: { id: userId } as any,
+      category: categoryId ? ({ id: categoryId } as any) : undefined,
+      ...productData,
     });
 
     try {
       // trying to hide the owner info
-      const { owner, ...created_product } =
-        await this.productRepo.save(newProduct);
+      const savedProduct = await this.productRepo.save(newProduct);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { owner, ...created_product } = savedProduct;
       return created_product;
     } catch (err) {
       this.logger.error({
@@ -126,22 +117,26 @@ export class ProductService {
         'You are not allowed to update this product',
       );
     }
-    const updatedItem = {
-      ...product,
-      name: updatedProduct.name || product.name,
-      price: updatedProduct.price || product.price,
-      updated_at: new Date(),
-    };
+
+    const { categoryId, ...productData } = updatedProduct;
+    
+    Object.assign(product, productData);
+    if (categoryId) {
+      product.category = { id: categoryId } as any;
+    }
+
+    product.updated_at = new Date();
+
     try {
-      return await this.productRepo.update(id, updatedItem);
+      return await this.productRepo.save(product);
     } catch (err) {
       this.logger.error({
-        message: 'failed to create product',
-        updatedItem,
+        message: 'failed to update product',
+        product,
         timeStamp: new Date(),
       });
       throw new InternalServerErrorException({
-        message: 'failed to create product',
+        message: 'failed to update product',
         error: `${err}`,
         timeStamp: new Date(),
       });

@@ -1,4 +1,5 @@
 import { User } from 'src/user/entities/entity';
+import { Category } from 'src/category/category.entity';
 import {
   Column,
   CreateDateColumn,
@@ -25,8 +26,8 @@ export class Product {
   @Column({ nullable: true })
   imageUrl?: string;
 
-  @Column({ nullable: true })
-  category?: string;
+  @ManyToOne(() => Category, (category) => category.products, { nullable: true })
+  category: Category;
 
   @Column({ nullable: true, type: 'float' })
   rating?: number;
