@@ -17,7 +17,6 @@ import { CategoryModule } from './category/category.module';
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService): TypeOrmModuleOptions => {
-        // ← change the arrow from => ({ to => {
 
         console.log('DB CONFIG:', {
           host: configService.get('DB_HOST'),
@@ -37,8 +36,9 @@ import { CategoryModule } from './category/category.module';
           database: configService.getOrThrow<string>('DB_DATABASE'),
           autoLoadEntities: true,
           synchronize: configService.get<string>('NODE_ENV') === 'development',
-        }; // ← close return object
-      }, // ← close useFactory
+          ssl: configService.get<string>('DB_SSL') === 'true',
+        };
+      },
     }),
     AuthModule,
     UserModule,
